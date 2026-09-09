@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Task Board</title>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  /* dark blueish background kind of like a night city photo */
+  background: linear-gradient(180deg, #04050c 0%, #0c1730 35%, #16254a 65%, #1c2f5c 100%);
+  min-height: 100vh;
+}
+
+/* top bar */
+.topbar {
+  background-color: #0b0e17;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid #222;
+}
+
+.logo {
+  color: white;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.searchbox {
+  background-color: #1b2030;
+  border: 1px solid #333;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  width: 250px;
+}
+
+.searchbox::placeholder {
+  color: #999;
+}
+
+/* board area */
+.board {
+  display: flex;
+  gap: 15px;
+  padding: 25px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.list {
+  background-color: rgba(15, 20, 35, 0.75);
+  border-radius: 8px;
+  width: 280px;
+  padding: 10px;
+  backdrop-filter: blur(2px);
+  flex-shrink: 0;
+}
+
+/* the "+ Add another list" button, styled like the light blue one in trello */
+.addListBtn {
+  background-color: rgba(255, 255, 255, 0.28);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  width: 260px;
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  flex-shrink: 0;
+  height: fit-content;
+}
+
+.addListBtn:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* the little inline box that appears when you click "add another list" */
+.addListBox {
+  background-color: rgba(15, 20, 35, 0.9);
+  border-radius: 8px;
+  width: 260px;
+  padding: 10px;
+  flex-shrink: 0;
+}
+
+.addListBox input {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: none;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.addListBox .listBtnRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.addListBox .listBtnRow button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.addListBox .listBtnRow span {
+  color: #ccc;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 6px;
+}
+
+.listHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-weight: bold;
+  padding: 4px 6px 10px 6px;
+  position: relative;
+  gap: 6px;
+}
+
+.listTitle {
+  flex: 1;
+}
+
+.listMenuBtn {
+  cursor: pointer;
+  font-size: 16px;
+  color: #ccc;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.listMenuBtn:hover {
+  background-color: rgba(255,255,255,0.15);
+}
+
+.listMenu {
+  position: absolute;
+  top: 34px;
+  right: 6px;
+  background-color: #1f2636;
+  border: 1px solid #333;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  z-index: 50;
+  min-width: 130px;
+  overflow: hidden;
+}
+
+.listMenuOption {
+  color: white;
+  font-size: 13px;
+  font-weight: normal;
+  padding: 9px 12px;
+  cursor: pointer;
+}
+
+.listMenuOption:hover {
+  background-color: #c0392b;
+}
+
+.listCount {
+  background-color: rgba(255,255,255,0.15);
+  color: #ccc;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.cards {
+  min-height: 20px;
+}
+
+/* task card */
+.taskcard {
+  background-color: #1f2636;
+  color: white;
+  border-radius: 6px;
+  padding: 10px 10px 8px 10px;
+  margin-bottom: 8px;
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+  border-left: 4px solid #555;
+}
+
+.taskcard:hover {
+  background-color: #293044;
+}
+
+.taskcard.High {
+  border-left-color: #e05252;
+}
+.taskcard.Medium {
+  border-left-color: #e0a952;
+}
+.taskcard.Low {
+  border-left-color: #52c47a;
+}
+
+.taskcard h4 {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+}
+
+.taskcard p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #b7bcc9;
+}
+
+.cardBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+
+.tag {
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: white;
+  font-size: 10px;
+}
+.tag.High { background-color: #e05252; }
+.tag.Medium { background-color: #e0a952; }
+.tag.Low { background-color: #52c47a; }
+
+.dateTag {
+  color: #9aa0ac;
+}
+
+/* add card input at bottom of list */
+.addCardBox {
+  margin-top: 4px;
+}
+
+.addCardInput {
+  width: 100%;
+  padding: 8px;
+  border-radius: 5px;
+  border: none;
+  background-color: rgba(255,255,255,0.08);
+  color: #ccc;
+  cursor: pointer;
+}
+
+/* popups */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.6);
+  justify-content: center;
+  align-items: center;
+}
+
+.overlay.show {
+  display: flex;
+}
+
+.popupBox {
+  background-color: #1b2030;
+  color: white;
+  padding: 20px 25px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 380px;
+}
+
+.popupBox h3 {
+  margin-top: 0;
+}
+
+.popupBox label {
+  display: block;
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: bold;
+  color: #ccc;
+}
+
+.popupBox input,
+.popupBox textarea,
+.popupBox select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  background-color: #12151f;
+  color: white;
+  font-size: 13px;
+}
+
+.popupBtns {
+  margin-top: 16px;
+  text-align: right;
+}
+
+.popupBtns button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  margin-left: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.popupBtns button:first-child {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.cancelBtn {
+  background-color: #444 !important;
+  color: white;
+}
+
+.deleteBtn {
+  background-color: #c0392b !important;
+  color: white;
+}
+
+/* highlight a list while dragging a card over it */
+.list.dragOver {
+  background-color: rgba(255,255,255,0.12);
+}
+
+/* the floating copy of the card that follows your mouse while dragging */
+.dragGhost {
+  position: fixed;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+  transform: rotate(2deg);
+  opacity: 0.95;
+}
+
+/* the see-through slot that shows exactly where the card will land */
+.dropPlaceholder {
+  border: 2px dashed rgba(255,255,255,0.35);
+  background-color: rgba(255,255,255,0.06);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- top bar like trello -->
+<div class="topbar">
+  <div class="logo">📋 My Board</div>
+  <input type="text" class="searchbox" placeholder="Search">
+</div>
+
+<!-- the board - lists get built here by script.js so we can add more -->
+<div class="board" id="boardArea"></div>
+
+<!-- popup form to actually fill in task details when adding -->
+<div id="addPopup" class="overlay">
+  <div class="popupBox">
+    <h3>Add Task</h3>
+
+    <label>Title</label>
+    <input type="text" id="newTitle">
+
+    <label>Description</label>
+    <textarea id="newDesc"></textarea>
+
+    <label>Priority</label>
+    <select id="newPriority">
+      <option>Low</option>
+      <option selected>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Due Date</label>
+    <input type="date" id="newDate">
+
+    <div class="popupBtns">
+      <button onclick="saveNewCard()">Add Card</button>
+      <button onclick="closeAddForm()" class="cancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- popup that opens when you click a card - lets you edit or delete -->
+<div id="editPopup" class="overlay">
+  <div class="popupBox">
+    <h3>Edit Task</h3>
+
+    <label>Title</label>
+    <input type="text" id="editTitle">
+
+    <label>Description</label>
+    <textarea id="editDesc"></textarea>
+
+    <label>Priority</label>
+    <select id="editPriority">
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Due Date</label>
+    <input type="date" id="editDate">
+
+    <div class="popupBtns">
+      <button onclick="saveEdit()">Save Changes</button>
+      <button onclick="deleteCard()" class="deleteBtn">Delete</button>
+      <button onclick="closeEditForm()" class="cancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// all my tasks live in this array
+let tasks = [
+  { id: 1, title: "Design homepage", desc: "Make a wireframe first", priority: "Medium", due: "", status: "todo" },
+  { id: 2, title: "Build navbar", desc: "Responsive nav with logo", priority: "High", due: "", status: "progress" },
+  { id: 3, title: "Setup project files", desc: "index, style, script", priority: "Low", due: "", status: "done" }
+];
+
+// the columns on the board. status in a task matches one of these ids
+let lists = [
+  { id: "todo", name: "To Do" },
+  { id: "progress", name: "Doing" },
+  { id: "done", name: "Done" }
+];
+
+let nextId = 4;
+let nextListId = 1; // used to make a unique id for each new list you add
+let listForNewCard = ""; // which list the add popup is currently adding to
+let editingId = null; // which card is open in the edit popup
+
+// draws everything on the board - all the lists, all the cards, and
+// the "add another list" button at the end
+function renderBoard() {
+  let boardArea = document.getElementById("boardArea");
+  boardArea.innerHTML = "";
+
+  for (let i = 0; i < lists.length; i++) {
+    boardArea.appendChild(makeListElement(lists[i]));
+  }
+
+  boardArea.appendChild(makeAddListButton());
+}
+
+// builds one whole column (header, its cards, add-a-card box)
+function makeListElement(list) {
+  let listDiv = document.createElement("div");
+  listDiv.className = "list";
+  listDiv.id = list.id;
+
+  let listTasks = tasks.filter(function (t) {
+    return t.status === list.id;
+  });
+
+  let header = document.createElement("div");
+  header.className = "listHeader";
+  header.innerHTML =
+    "<span class='listTitle'>" + list.name + "</span>" +
+    "<span class='listCount'>" + listTasks.length + "</span>" +
+    "<span class='listMenuBtn'>&#8942;</span>";
+  listDiv.appendChild(header);
+
+  // the "..." button opens a tiny menu with the delete option in it
+  let menuBtn = header.querySelector(".listMenuBtn");
+  menuBtn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    closeAnyOpenListMenu();
+
+    let menu = document.createElement("div");
+    menu.className = "listMenu";
+
+    let deleteOption = document.createElement("div");
+    deleteOption.className = "listMenuOption";
+    deleteOption.innerText = "Delete list";
+    deleteOption.addEventListener("click", function () {
+      deleteList(list.id);
+    });
+
+    menu.appendChild(deleteOption);
+    listDiv.appendChild(menu);
+  });
+
+  let cardsBox = document.createElement("div");
+  cardsBox.className = "cards";
+  for (let i = 0; i < listTasks.length; i++) {
+    cardsBox.appendChild(makeCardElement(listTasks[i]));
+  }
+  listDiv.appendChild(cardsBox);
+
+  let addBox = document.createElement("div");
+  addBox.className = "addCardBox";
+  let addInput = document.createElement("input");
+  addInput.type = "text";
+  addInput.placeholder = "+ Add a card";
+  addInput.className = "addCardInput";
+  addInput.addEventListener("click", function () {
+    showForm(list.id);
+  });
+  addBox.appendChild(addInput);
+  listDiv.appendChild(addBox);
+
+  return listDiv;
+}
+
+// the "+ Add another list" button, and the little form it turns into
+function makeAddListButton() {
+  let wrap = document.createElement("div");
+
+  let btn = document.createElement("button");
+  btn.className = "addListBtn";
+  btn.innerText = "+ Add another list";
+
+  btn.addEventListener("click", function () {
+    // swap the button out for a little inline input box, trello style
+    let box = document.createElement("div");
+    box.className = "addListBox";
+
+    let input = document.createElement("input");
+    input.type = "text";
+    input.placeholder = "Enter list name";
+
+    let btnRow = document.createElement("div");
+    btnRow.className = "listBtnRow";
+
+    let addBtn = document.createElement("button");
+    addBtn.innerText = "Add list";
+    addBtn.addEventListener("click", function () {
+      confirmNewList(input.value);
+    });
+
+    let cancelX = document.createElement("span");
+    cancelX.innerHTML = "&times;";
+    cancelX.addEventListener("click", function () {
+      renderBoard();
+    });
+
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") confirmNewList(input.value);
+    });
+
+    btnRow.appendChild(addBtn);
+    btnRow.appendChild(cancelX);
+    box.appendChild(input);
+    box.appendChild(btnRow);
+
+    wrap.innerHTML = "";
+    wrap.appendChild(box);
+    input.focus();
+  });
+
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function confirmNewList(name) {
+  if (name.trim() === "") return;
+
+  lists.push({ id: "list" + nextListId, name: name.trim() });
+  nextListId = nextListId + 1;
+
+  renderBoard();
+}
+
+// removes a whole list, and any cards that were sitting inside it
+function deleteList(listId) {
+  let sure = confirm("Delete this list and all its cards?");
+  if (!sure) return;
+
+  lists = lists.filter(function (l) {
+    return l.id !== listId;
+  });
+
+  tasks = tasks.filter(function (t) {
+    return t.status !== listId;
+  });
+
+  renderBoard();
+}
+
+// closes the little "..." dropdown menu if one is already open,
+// used before opening a new one and when clicking elsewhere on the page
+function closeAnyOpenListMenu() {
+  document.querySelectorAll(".listMenu").forEach(function (menu) {
+    menu.remove();
+  });
+}
+
+document.addEventListener("click", function () {
+  closeAnyOpenListMenu();
+});
+
+// builds the little card div for one task
+function makeCardElement(task) {
+  let div = document.createElement("div");
+  div.className = "taskcard " + task.priority;
+  div.id = "card-" + task.id;
+
+  let dueText = "";
+  if (task.due) {
+    dueText = task.due;
+  }
+
+  div.innerHTML =
+    "<h4>" + task.title + "</h4>" +
+    "<p>" + task.desc + "</p>" +
+    "<div class='cardBottom'>" +
+      "<span class='tag " + task.priority + "'>" + task.priority + "</span>" +
+      "<span class='dateTag'>" + dueText + "</span>" +
+    "</div>";
+
+  // this is where the actual "follow the cursor" dragging happens
+  div.addEventListener("mousedown", function (e) {
+    startCardDrag(e, div, task);
+  });
+
+  return div;
+}
+
+/* ---------- DRAG THAT FOLLOWS THE MOUSE ---------- */
+// instead of the browser's built in drag (which just shows a faint
+// ghost stuck near where you picked it up) this makes a floating copy
+// of the card that actually moves with the cursor as you drag it
+
+function startCardDrag(e, cardDiv, task) {
+  if (e.button !== 0) return; // only left mouse button
+
+  let startX = e.clientX;
+  let startY = e.clientY;
+  let isDragging = false;
+  let ghost = null;
+  let placeholder = null;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  function onMouseMove(e) {
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
+
+    // wait til the mouse has actually moved a bit before starting a drag
+    // this way a plain click still opens the edit popup like normal
+    if (!isDragging) {
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) return;
+      isDragging = true;
+
+      let rect = cardDiv.getBoundingClientRect();
+      offsetX = startX - rect.left;
+      offsetY = startY - rect.top;
+
+      // floating copy that follows the cursor
+      ghost = cardDiv.cloneNode(true);
+      ghost.classList.add("dragGhost");
+      ghost.style.width = rect.width + "px";
+      ghost.style.left = rect.left + "px";
+      ghost.style.top = rect.top + "px";
+      document.body.appendChild(ghost);
+
+      // see-through placeholder that shows where the card will land,
+      // same height as the real card so nothing jumps around
+      placeholder = document.createElement("div");
+      placeholder.className = "dropPlaceholder";
+      placeholder.style.height = rect.height + "px";
+
+      // hide the real card completely while dragging, only the
+      // floating ghost + the placeholder slot are visible
+      cardDiv.style.display = "none";
+      cardDiv.parentNode.insertBefore(placeholder, cardDiv);
+    }
+
+    // move the floating card so it sits right under the cursor
+    ghost.style.left = (e.clientX - offsetX) + "px";
+    ghost.style.top = (e.clientY - offsetY) + "px";
+
+    // figure out where the placeholder slot should sit right now
+    let underEl = document.elementFromPoint(e.clientX, e.clientY);
+    if (underEl) {
+      let overCard = underEl.closest(".taskcard");
+      let overCardsBox = underEl.closest(".cards");
+
+      if (overCard && overCard !== cardDiv) {
+        let box = overCard.getBoundingClientRect();
+        let middle = box.top + box.height / 2;
+        if (e.clientY < middle) {
+          overCard.parentNode.insertBefore(placeholder, overCard);
+        } else {
+          overCard.parentNode.insertBefore(placeholder, overCard.nextSibling);
+        }
+      } else if (overCardsBox) {
+        // hovering empty space in a column, just drop it at the end
+        overCardsBox.appendChild(placeholder);
+      }
+    }
+  }
+
+  function onMouseUp(e) {
+    document.removeEventListener("mousemove", onMouseMove);
+    document.removeEventListener("mouseup", onMouseUp);
+
+    if (!isDragging) {
+      // never actually dragged, so treat it as a click
+      openEditForm(task.id);
+      return;
+    }
+
+    // work out the new status + position straight from where the
+    // placeholder ended up sitting in the page
+    let targetCardsBox = placeholder.closest(".cards");
+    let targetListEl = placeholder.closest(".list");
+    let newStatus = targetListEl ? targetListEl.id : task.status;
+    let nextCardEl = placeholder.nextElementSibling;
+
+    if (ghost) ghost.remove();
+    placeholder.remove();
+    cardDiv.style.display = "";
+
+    if (nextCardEl && nextCardEl.classList.contains("taskcard")) {
+      let targetId = parseInt(nextCardEl.id.replace("card-", ""));
+      moveCard(task.id, targetId, true, newStatus);
+    } else {
+      moveCardToEnd(task.id, newStatus);
+    }
+  }
+
+  document.addEventListener("mousemove", onMouseMove);
+  document.addEventListener("mouseup", onMouseUp);
+}
+
+// moves a card straight to the end of a list (used when you drop
+// on empty space in a column instead of directly on another card)
+function moveCardToEnd(cardId, newStatus) {
+  let cardToMove = null;
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === cardId) cardToMove = tasks[i];
+  }
+  if (cardToMove === null) return;
+
+  tasks = tasks.filter(function (t) {
+    return t.id !== cardId;
+  });
+
+  cardToMove.status = newStatus;
+  tasks.push(cardToMove);
+
+  renderBoard();
+}
+
+// moves a card to a new spot in the tasks array (and updates its status)
+// targetId is the card we dropped on, dropBefore says above or below it
+function moveCard(cardId, targetId, dropBefore, newStatus) {
+  let cardToMove = null;
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === cardId) {
+      cardToMove = tasks[i];
+    }
+  }
+  if (cardToMove === null) return;
+
+  // pull it out of the array first
+  tasks = tasks.filter(function (t) {
+    return t.id !== cardId;
+  });
+
+  cardToMove.status = newStatus;
+
+  // find where the target card is now (index shifts after the filter above)
+  let targetIndex = -1;
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === targetId) {
+      targetIndex = i;
+    }
+  }
+
+  if (targetIndex === -1) {
+    tasks.push(cardToMove);
+  } else if (dropBefore) {
+    tasks.splice(targetIndex, 0, cardToMove);
+  } else {
+    tasks.splice(targetIndex + 1, 0, cardToMove);
+  }
+
+  renderBoard();
+}
+
+/* ---------- ADD CARD STUFF ---------- */
+
+function showForm(listName) {
+  listForNewCard = listName;
+  document.getElementById("newTitle").value = "";
+  document.getElementById("newDesc").value = "";
+  document.getElementById("newPriority").value = "Medium";
+  document.getElementById("newDate").value = "";
+  document.getElementById("addPopup").classList.add("show");
+}
+
+function closeAddForm() {
+  document.getElementById("addPopup").classList.remove("show");
+}
+
+function saveNewCard() {
+  let title = document.getElementById("newTitle").value;
+
+  if (title === "") {
+    alert("Please type a title for the task");
+    return;
+  }
+
+  let newTask = {
+    id: nextId,
+    title: title,
+    desc: document.getElementById("newDesc").value,
+    priority: document.getElementById("newPriority").value,
+    due: document.getElementById("newDate").value,
+    status: listForNewCard
+  };
+
+  tasks.push(newTask);
+  nextId = nextId + 1;
+
+  closeAddForm();
+  renderBoard();
+}
+
+/* ---------- EDIT / DELETE CARD STUFF ---------- */
+
+function openEditForm(id) {
+  editingId = id;
+
+  // find the task with this id
+  let task = null;
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === id) {
+      task = tasks[i];
+    }
+  }
+
+  if (task === null) return;
+
+  document.getElementById("editTitle").value = task.title;
+  document.getElementById("editDesc").value = task.desc;
+  document.getElementById("editPriority").value = task.priority;
+  document.getElementById("editDate").value = task.due;
+
+  document.getElementById("editPopup").classList.add("show");
+}
+
+function closeEditForm() {
+  document.getElementById("editPopup").classList.remove("show");
+  editingId = null;
+}
+
+function saveEdit() {
+  let newTitle = document.getElementById("editTitle").value;
+
+  if (newTitle === "") {
+    alert("Title can't be empty");
+    return;
+  }
+
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === editingId) {
+      tasks[i].title = newTitle;
+      tasks[i].desc = document.getElementById("editDesc").value;
+      tasks[i].priority = document.getElementById("editPriority").value;
+      tasks[i].due = document.getElementById("editDate").value;
+    }
+  }
+
+  closeEditForm();
+  renderBoard();
+}
+
+function deleteCard() {
+  let sure = confirm("Delete this task?");
+  if (!sure) return;
+
+  tasks = tasks.filter(function (task) {
+    return task.id !== editingId;
+  });
+
+  closeEditForm();
+  renderBoard();
+}
+
+// close popups if you click the dark overlay part instead of the box
+document.getElementById("addPopup").addEventListener("click", function (e) {
+  if (e.target.id === "addPopup") closeAddForm();
+});
+document.getElementById("editPopup").addEventListener("click", function (e) {
+  if (e.target.id === "editPopup") closeEditForm();
+});
+
+// draw the board when page loads
+renderBoard();
+
+</script>
+</body>
+</html>
