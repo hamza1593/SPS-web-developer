@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SB Admin Dashboard</title>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --primary:#4e73df; --success:#1cc88a; --info:#36b9cc; --warning:#f6c23e; --danger:#e74a3b;
+  --sidebar-w:230px;
+}
+body{font-family:'Nunito',sans-serif;background:#f4f6fb;color:#3a3b45;}
+
+/* Sidebar */
+#sidebar{width:var(--sidebar-w);min-height:100vh;background:linear-gradient(180deg,#4e73df 0%,#3f5ec9 100%);
+  position:fixed;top:0;left:0;transition:margin-left .25s ease;z-index:1030;overflow-y:auto;}
+#sidebar .brand{color:#fff;font-weight:800;letter-spacing:.5px;padding:1rem 1.2rem;display:flex;align-items:center;gap:.6rem;border-bottom:1px solid rgba(255,255,255,.15);}
+#sidebar .nav-section-title{color:rgba(255,255,255,.55);font-size:.7rem;letter-spacing:1px;text-transform:uppercase;padding:1rem 1.2rem .3rem;}
+#sidebar .nav-link{color:rgba(255,255,255,.85);padding:.65rem 1.2rem;font-size:.88rem;font-weight:600;display:flex;align-items:center;gap:.65rem;border-left:3px solid transparent;cursor:pointer;}
+#sidebar .nav-link i{width:18px;text-align:center;}
+#sidebar .nav-link:hover,#sidebar .nav-link.active{color:#fff;background:rgba(255,255,255,.08);border-left-color:#fff;}
+#sidebar .toggle-dot{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;margin:1rem auto;color:#fff;cursor:pointer;}
+
+#content{margin-left:var(--sidebar-w);transition:margin-left .25s ease;min-height:100vh;}
+body.sidebar-collapsed #sidebar{margin-left:calc(var(--sidebar-w) * -1);}
+body.sidebar-collapsed #content{margin-left:0;}
+
+#topbar{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:.7rem 1.5rem;position:sticky;top:0;z-index:1020;}
+#topbar .search-box{background:#f4f6fb;border-radius:.4rem;max-width:320px;}
+#topbar .search-box input{background:transparent;border:none;}
+#topbar .search-box input:focus{box-shadow:none;background:transparent;}
+#topbar .icon-btn{position:relative;color:#8a8fa3;font-size:1.1rem;margin-left:1rem;cursor:pointer;border:none;background:none;}
+#topbar .icon-btn .badge{position:absolute;top:-6px;right:-8px;font-size:.6rem;}
+#topbar .avatar{width:36px;height:36px;border-radius:50%;object-fit:cover;}
+
+.page-title{font-weight:700;color:#3a3b45;}
+.stat-card{border:none;border-left:4px solid var(--primary);border-radius:.5rem;box-shadow:0 .15rem 1rem rgba(58,59,69,.08);transition:transform .15s;}
+.stat-card:hover{transform:translateY(-3px);}
+.stat-card.success{border-left-color:var(--success);}
+.stat-card.info{border-left-color:var(--info);}
+.stat-card.warning{border-left-color:var(--warning);}
+.stat-label{font-size:.7rem;font-weight:700;letter-spacing:.4px;color:var(--primary);text-transform:uppercase;}
+.stat-card.success .stat-label{color:var(--success);}
+.stat-card.info .stat-label{color:var(--info);}
+.stat-card.warning .stat-label{color:var(--warning);}
+.stat-value{font-size:1.3rem;font-weight:800;color:#3a3b45;}
+.stat-icon{font-size:1.7rem;color:#dddfeb;}
+
+.card{border:none;border-radius:.6rem;box-shadow:0 .15rem 1rem rgba(58,59,69,.08);}
+.card-header{background:#fff;border-bottom:1px solid #eaecf4;font-weight:700;color:#4e73df;font-size:.9rem;border-radius:.6rem .6rem 0 0 !important;}
+.progress{height:.6rem;border-radius:1rem;}
+.legend-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:.4rem;}
+
+.app-section{display:none;}
+.app-section.active-section{display:block;animation:fadeIn .25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.swatch{height:70px;border-radius:.4rem;display:flex;align-items:flex-end;padding:.4rem;color:#fff;font-size:.72rem;font-weight:700;cursor:pointer;}
+mark.search-hit{background:#fff3b0;padding:0;}
+#toastHost{position:fixed;top:1rem;right:1rem;z-index:2000;}
+
+@media (max-width: 991.98px){
+  #sidebar{margin-left:calc(var(--sidebar-w) * -1);}
+  #content{margin-left:0;}
+  body.sidebar-collapsed #sidebar{margin-left:0;}
+}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="brand"><i class="bi bi-hexagon-fill"></i><span>SB ADMIN</span></div>
+  <div class="nav flex-column" id="sideNav">
+    <a class="nav-link active" data-section="dashboard"><i class="bi bi-grid-1x2-fill"></i> Dashboard</a>
+
+    <div class="nav-section-title">Interface</div>
+    <a class="nav-link" data-section="components"><i class="bi bi-columns-gap"></i> Components</a>
+    <a class="nav-link" data-section="utilities"><i class="bi bi-tools"></i> Utilities</a>
+
+    <div class="nav-section-title">Addons</div>
+    <a class="nav-link" data-section="pages"><i class="bi bi-file-earmark-text"></i> Pages</a>
+    <a class="nav-link" data-section="charts"><i class="bi bi-bar-chart-fill"></i> Charts</a>
+    <a class="nav-link" data-section="tables"><i class="bi bi-table"></i> Tables</a>
+  </div>
+  <div class="toggle-dot" id="sidebarToggleBtn"><i class="bi bi-chevron-left"></i></div>
+</nav>
+
+<div id="content">
+
+  <div id="topbar" class="d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center">
+      <button class="btn btn-sm btn-light me-3 d-lg-none" id="sidebarToggleMobile"><i class="bi bi-list"></i></button>
+      <div class="input-group search-box">
+        <span class="input-group-text bg-transparent border-0"><i class="bi bi-search text-muted"></i></span>
+        <input type="text" id="globalSearch" class="form-control" placeholder="Search projects & tables...">
+      </div>
+    </div>
+    <div class="d-flex align-items-center">
+      <div class="dropdown">
+        <button class="icon-btn dropdown-toggle" data-bs-toggle="dropdown" id="msgBtn">
+          <i class="bi bi-envelope-fill"></i>
+          <span class="badge rounded-pill bg-danger" id="msgBadge">2</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-2" style="width:260px;" id="msgList"></ul>
+      </div>
+      <div class="dropdown">
+        <button class="icon-btn dropdown-toggle" data-bs-toggle="dropdown" id="notifBtn">
+          <i class="bi bi-bell-fill"></i>
+          <span class="badge rounded-pill bg-warning text-dark" id="notifBadge">1</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end p-2" style="width:260px;" id="notifList"></ul>
+      </div>
+      <div class="dropdown ms-3">
+        <a class="d-flex align-items-center text-decoration-none dropdown-toggle" href="#" data-bs-toggle="dropdown">
+          <span class="me-2 fw-semibold text-dark d-none d-sm-inline">Tasleem Akhtar</span>
+          <img src="https://ui-avatars.com/api/?name=Tasleem+Akhtar&background=4e73df&color=fff&size=64" class="avatar" alt="avatar">
+        </a>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="#" data-section="pages" data-goto-profile="1">Profile</a></li>
+          <li><a class="dropdown-item" href="#" data-section="utilities">Settings</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item text-danger" href="#" id="logoutBtn">Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid p-4">
+
+    <!-- ============ DASHBOARD ============ -->
+    <section class="app-section active-section" id="section-dashboard">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="page-title mb-0">Dashboard</h3>
+        <button class="btn btn-primary btn-sm" id="generateReportBtn"><i class="bi bi-download me-1"></i> Generate Report</button>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card">
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <div><div class="stat-label">Earnings (Monthly)</div><div class="stat-value" id="statMonthly">$0</div></div>
+              <i class="bi bi-calendar3 stat-icon"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card success">
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <div><div class="stat-label">Earnings (Annual)</div><div class="stat-value" id="statAnnual">$0</div></div>
+              <i class="bi bi-currency-dollar stat-icon"></i>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card info">
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="stat-label">Tasks</div><i class="bi bi-clipboard-check stat-icon"></i>
+              </div>
+              <div class="d-flex align-items-center">
+                <div class="stat-value me-2" id="statTasks">0%</div>
+                <div class="progress flex-grow-1"><div class="progress-bar bg-info" id="taskProgress" style="width:0%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+          <div class="card stat-card warning">
+            <div class="card-body d-flex justify-content-between align-items-center">
+              <div><div class="stat-label">Pending Requests</div><div class="stat-value" id="statPending">0</div></div>
+              <i class="bi bi-chat-dots stat-icon"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-xl-8">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              Earnings Overview <small class="text-muted fw-normal">live from raw data (Charts page)</small>
+            </div>
+            <div class="card-body"><canvas id="earningsChart" height="110"></canvas></div>
+          </div>
+        </div>
+        <div class="col-xl-4">
+          <div class="card h-100">
+            <div class="card-header">Revenue Sources</div>
+            <div class="card-body d-flex flex-column align-items-center">
+              <canvas id="revenueChart" height="200"></canvas>
+              <div class="d-flex justify-content-center gap-3 mt-3 small" id="revenueLegend"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-xl-6">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              Projects
+              <button class="btn btn-sm btn-outline-primary" id="addProjectBtn"><i class="bi bi-plus-lg"></i> Add</button>
+            </div>
+            <div class="card-body" id="projectsList"></div>
+          </div>
+        </div>
+        <div class="col-xl-6">
+          <div class="card h-100">
+            <div class="card-header">Illustrations</div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+              <img src="https://cdn.jsdelivr.net/gh/startbootstrap/startbootstrap-sb-admin-2@gh-pages/img/undraw_posting_photo.svg"
+                   alt="illustration" class="img-fluid" style="max-height:180px;"
+                   onerror="this.src='https://placehold.co/400x220?text=Illustration'">
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPONENTS ============ -->
+    <section class="app-section" id="section-components">
+      <h3 class="page-title mb-4">Components</h3>
+      <div class="card mb-4">
+        <div class="card-header">Buttons</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+          <button class="btn btn-primary demo-btn">Primary</button>
+          <button class="btn btn-success demo-btn">Success</button>
+          <button class="btn btn-info demo-btn text-white">Info</button>
+          <button class="btn btn-warning demo-btn">Warning</button>
+          <button class="btn btn-danger demo-btn">Danger</button>
+          <button class="btn btn-outline-dark demo-btn">Outline</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Cards &amp; Modal</div>
+        <div class="card-body">
+          <p class="text-muted">Click below to open a working Bootstrap modal.</p>
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#demoModal">Open Modal</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ UTILITIES ============ -->
+    <section class="app-section" id="section-utilities">
+      <h3 class="page-title mb-4">Utilities</h3>
+      <div class="card mb-4">
+        <div class="card-header">Colors <small class="text-muted fw-normal">(click a swatch to copy hex)</small></div>
+        <div class="card-body">
+          <div class="row g-2" id="colorSwatches"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">Account Settings</div>
+        <div class="card-body">
+          <form id="settingsForm" class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Display name</label>
+              <input type="text" class="form-control" id="settingsName" value="Tasleem Akhtar">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-control" id="settingsEmail" value="tasleem.akhtar@sbadmin.com">
+            </div>
+            <div class="col-12">
+              <button type="submit" class="btn btn-primary">Save changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGES ============ -->
+    <section class="app-section" id="section-pages">
+      <h3 class="page-title mb-4">Pages</h3>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">Login</div>
+            <div class="card-body">
+              <form id="loginForm">
+                <div class="mb-3">
+                  <label class="form-label">Email</label>
+                  <input type="email" class="form-control" id="loginEmail" required>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Password</label>
+                  <input type="password" class="form-control" id="loginPass" required minlength="4">
+                </div>
+                <button class="btn btn-primary w-100" type="submit">Login</button>
+              </form>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">Profile</div>
+            <div class="card-body text-center" id="profileCard">
+              <img src="https://ui-avatars.com/api/?name=Tasleem+Akhtar&background=4e73df&color=fff&size=128" class="rounded-circle mb-3" alt="avatar">
+              <h5 class="mb-0">Tasleem Akhtar</h5>
+              <p class="text-muted small">Administrator</p>
+              <span class="badge bg-success">Active</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CHARTS (raw data editor) ============ -->
+    <section class="app-section" id="section-charts">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="page-title mb-0">Charts — Raw Data</h3>
+        <div>
+          <button class="btn btn-sm btn-outline-primary" id="addMonthBtn"><i class="bi bi-plus-lg"></i> Add row</button>
+          <button class="btn btn-sm btn-outline-success" id="resetDataBtn"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+        </div>
+      </div>
+      <div class="row g-3">
+        <div class="col-lg-5">
+          <div class="card">
+            <div class="card-header">Edit values — chart updates live</div>
+            <div class="card-body p-0">
+              <table class="table table-sm mb-0" id="rawDataTable">
+                <thead><tr><th>Month</th><th>Earnings ($)</th><th></th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="card h-100">
+            <div class="card-header">Earnings Overview (linked)</div>
+            <div class="card-body"><canvas id="earningsChart2" height="150"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TABLES ============ -->
+    <section class="app-section" id="section-tables">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="page-title mb-0">Tables</h3>
+        <button class="btn btn-sm btn-primary" id="addRowBtn"><i class="bi bi-plus-lg"></i> Add Employee</button>
+      </div>
+      <div class="card">
+        <div class="card-header">Employees <small class="text-muted fw-normal">(click a column header to sort)</small></div>
+        <div class="card-body p-0">
+          <table class="table table-hover mb-0" id="empTable">
+            <thead>
+              <tr>
+                <th class="sortable" data-key="name" style="cursor:pointer">Name <i class="bi bi-arrow-down-up small"></i></th>
+                <th class="sortable" data-key="position" style="cursor:pointer">Position <i class="bi bi-arrow-down-up small"></i></th>
+                <th class="sortable" data-key="office" style="cursor:pointer">Office <i class="bi bi-arrow-down-up small"></i></th>
+                <th class="sortable" data-key="salary" style="cursor:pointer">Salary <i class="bi bi-arrow-down-up small"></i></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="empTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="text-center text-muted small py-4">&copy; 2026 SB Admin Dashboard. All rights reserved.</footer>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="demoModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Working Modal</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">This modal, all nav links, dropdowns, forms and charts on this page are wired up with real jQuery/Bootstrap behavior.</div>
+      <div class="modal-footer"><button class="btn btn-primary" data-bs-dismiss="modal">Got it</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<script>
+$(function(){
+
+/* ================= TOAST HELPER ================= */
+function toast(msg, type){
+  type = type || 'primary';
+  var id = 't' + Date.now();
+  var $t = $(
+    '<div id="'+id+'" class="toast align-items-center text-bg-'+type+' border-0 mb-2" role="alert">'+
+      '<div class="d-flex"><div class="toast-body">'+msg+'</div>'+
+      '<button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>'+
+    '</div>'
+  );
+  $('#toastHost').append($t);
+  var t = new bootstrap.Toast($t[0], {delay: 2200});
+  t.show();
+  $t.on('hidden.bs.toast', function(){ $t.remove(); });
+}
+
+/* ================= SPA NAVIGATION ================= */
+function goToSection(name){
+  $('.app-section').removeClass('active-section');
+  $('#section-' + name).addClass('active-section');
+  $('#sideNav .nav-link').removeClass('active');
+  $('#sideNav .nav-link[data-section="' + name + '"]').addClass('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+$('#sideNav .nav-link').on('click', function(){
+  goToSection($(this).data('section'));
+});
+$('[data-section]').on('click', function(e){
+  e.preventDefault();
+  goToSection($(this).data('section'));
+  if ($(this).data('goto-profile')) toast('Loaded your profile', 'info');
+});
+
+/* ================= SIDEBAR TOGGLE ================= */
+$('#sidebarToggleBtn, #sidebarToggleMobile').on('click', function(){
+  $('body').toggleClass('sidebar-collapsed');
+});
+
+/* ================= RAW DATA (single source of truth for charts) ================= */
+var defaultData = [
+  {month:'Jan', value:12000},{month:'Feb', value:19000},{month:'Mar', value:15000},
+  {month:'Apr', value:25000},{month:'May', value:22000},{month:'Jun', value:30000},
+  {month:'Jul', value:26000},{month:'Aug', value:33000},{month:'Sep', value:29000},
+  {month:'Oct', value:36000},{month:'Nov', value:33000},{month:'Dec', value:42000}
+];
+var earningsData = JSON.parse(JSON.stringify(defaultData));
+var revenueData = [
+  {label:'Direct', value:55, color:'#4e73df'},
+  {label:'Social', value:20, color:'#1cc88a'},
+  {label:'Referral', value:25, color:'#36b9cc'}
+];
+
+var earningsChart, earningsChart2, revenueChart;
+
+function buildGradient(ctx){
+  var g = ctx.createLinearGradient(0,0,0,250);
+  g.addColorStop(0,'rgba(78,115,223,.25)');
+  g.addColorStop(1,'rgba(78,115,223,0)');
+  return g;
+}
+
+function makeLineChart(canvasId){
+  var ctx = document.getElementById(canvasId).getContext('2d');
+  return new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: earningsData.map(function(d){return d.month;}),
+      datasets:[{
+        label:'Earnings',
+        data: earningsData.map(function(d){return d.value;}),
+        borderColor:'#4e73df', backgroundColor:buildGradient(ctx),
+        borderWidth:3, tension:.35, pointRadius:3, pointBackgroundColor:'#4e73df', fill:true
+      }]
+    },
+    options:{
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{callback:function(v){return '$'+(v/1000)+'k';}}, grid:{color:'#eaecf4'}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+function refreshLineCharts(){
+  [earningsChart, earningsChart2].forEach(function(ch){
+    if(!ch) return;
+    ch.data.labels = earningsData.map(function(d){return d.month;});
+    ch.data.datasets[0].data = earningsData.map(function(d){return d.value;});
+    ch.update();
+  });
+  refreshStats();
+}
+
+function refreshRevenueChart(){
+  if(!revenueChart) return;
+  revenueChart.data.labels = revenueData.map(function(d){return d.label;});
+  revenueChart.data.datasets[0].data = revenueData.map(function(d){return d.value;});
+  revenueChart.data.datasets[0].backgroundColor = revenueData.map(function(d){return d.color;});
+  revenueChart.update();
+  renderRevenueLegend();
+}
+
+function renderRevenueLegend(){
+  var $l = $('#revenueLegend').empty();
+  revenueData.forEach(function(d){
+    $l.append('<span><span class="legend-dot" style="background:'+d.color+'"></span>'+d.label+'</span>');
+  });
+}
+
+earningsChart  = makeLineChart('earningsChart');
+earningsChart2 = makeLineChart('earningsChart2');
+revenueChart = new Chart(document.getElementById('revenueChart').getContext('2d'), {
+  type:'doughnut',
+  data:{
+    labels: revenueData.map(function(d){return d.label;}),
+    datasets:[{ data: revenueData.map(function(d){return d.value;}),
+      backgroundColor: revenueData.map(function(d){return d.color;}),
+      hoverOffset:6, borderWidth:2 }]
+  },
+  options:{ cutout:'75%', plugins:{legend:{display:false}} }
+});
+renderRevenueLegend();
+
+/* -------- Raw data table (Charts section) -------- */
+function renderRawTable(){
+  var $tb = $('#rawDataTable tbody').empty();
+  earningsData.forEach(function(row, i){
+    var $tr = $('<tr>');
+    $tr.append('<td><input type="text" class="form-control form-control-sm month-input" value="'+row.month+'" data-i="'+i+'"></td>');
+    $tr.append('<td><input type="number" class="form-control form-control-sm value-input" value="'+row.value+'" data-i="'+i+'"></td>');
+    $tr.append('<td><button class="btn btn-sm btn-outline-danger del-row" data-i="'+i+'"><i class="bi bi-trash"></i></button></td>');
+    $tb.append($tr);
+  });
+}
+renderRawTable();
+
+$('#rawDataTable').on('input', '.month-input', function(){
+  earningsData[$(this).data('i')].month = $(this).val();
+  refreshLineCharts();
+});
+$('#rawDataTable').on('input', '.value-input', function(){
+  earningsData[$(this).data('i')].value = Number($(this).val()) || 0;
+  refreshLineCharts();
+});
+$('#rawDataTable').on('click', '.del-row', function(){
+  earningsData.splice($(this).data('i'), 1);
+  renderRawTable();
+  refreshLineCharts();
+});
+$('#addMonthBtn').on('click', function(){
+  earningsData.push({month:'New', value: 10000});
+  renderRawTable();
+  refreshLineCharts();
+  toast('Row added to raw data', 'success');
+});
+$('#resetDataBtn').on('click', function(){
+  earningsData = JSON.parse(JSON.stringify(defaultData));
+  renderRawTable();
+  refreshLineCharts();
+  toast('Data reset to defaults', 'info');
+});
+
+/* ================= STAT CARDS (derived from raw data) ================= */
+function refreshStats(){
+  var annual = earningsData.reduce(function(s,d){return s + d.value;}, 0);
+  var monthly = earningsData.length ? earningsData[earningsData.length-1].value : 0;
+  $('#statMonthly').text('$' + monthly.toLocaleString());
+  $('#statAnnual').text('$' + annual.toLocaleString());
+}
+
+var tasksPct = 50, pendingCount = 18;
+function refreshTasksPending(){
+  $('#statTasks').text(tasksPct + '%');
+  $('#taskProgress').css('width', tasksPct + '%');
+  $('#statPending').text(pendingCount);
+}
+refreshStats();
+refreshTasksPending();
+
+/* ================= GENERATE REPORT (real CSV export) ================= */
+$('#generateReportBtn').on('click', function(){
+  var rows = [['Month','Earnings']];
+  earningsData.forEach(function(d){ rows.push([d.month, d.value]); });
+  rows.push([]); rows.push(['Revenue Source','Share %']);
+  revenueData.forEach(function(d){ rows.push([d.label, d.value]); });
+  var csv = rows.map(function(r){ return r.join(','); }).join('\n');
+  var blob = new Blob([csv], {type:'text/csv'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = 'dashboard-report.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  toast('Report generated & downloaded (CSV)', 'success');
+});
+
+/* ================= PROJECTS LIST ================= */
+var projects = [
+  { name:'Server Migration', percent:20, color:'bg-danger'  },
+  { name:'Sales Tracking',   percent:40, color:'bg-warning' },
+  { name:'Customer Database',percent:60, color:'bg-primary' },
+  { name:'Payout Details',   percent:80, color:'bg-success' }
+];
+function renderProjects(filter){
+  var $list = $('#projectsList').empty();
+  var colors = ['bg-danger','bg-warning','bg-primary','bg-success','bg-info'];
+  var shown = 0;
+  $.each(projects, function(i, p){
+    if (filter && p.name.toLowerCase().indexOf(filter.toLowerCase()) === -1) return;
+    shown++;
+    var label = p.name;
+    if (filter){
+      var re = new RegExp('(' + filter.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'ig');
+      label = p.name.replace(re, '<mark class="search-hit">$1</mark>');
+    }
+    var row = $('<div class="mb-3">');
+    row.append('<div class="d-flex justify-content-between small mb-1"><span>'+label+'</span><span>'+p.percent+'%</span></div>');
+    row.append('<div class="progress"><div class="progress-bar '+p.color+'" style="width:'+p.percent+'%"></div></div>');
+    $list.append(row);
+  });
+  if (!shown) $list.append('<p class="text-muted small mb-0">No projects match your search.</p>');
+}
+renderProjects();
+
+$('#addProjectBtn').on('click', function(){
+  var name = prompt('New project name:', 'Untitled Project');
+  if (!name) return;
+  var colors = ['bg-danger','bg-warning','bg-primary','bg-success','bg-info'];
+  projects.push({ name:name, percent: Math.floor(Math.random()*90)+10, color: colors[Math.floor(Math.random()*colors.length)] });
+  renderProjects($('#globalSearch').val());
+  toast('Project "'+name+'" added', 'success');
+});
+
+/* ================= GLOBAL SEARCH (filters projects + employee table) ================= */
+$('#globalSearch').on('input', function(){
+  var q = $(this).val();
+  renderProjects(q);
+  renderEmpTable(q);
+});
+
+/* ================= MESSAGES / NOTIFICATIONS DROPDOWNS ================= */
+var messages = [
+  {from:'Emily Fowler', text:'Hi there! I am wondering if you can help...', unread:true},
+  {from:'Jae Chun', text:'I have the photos you asked for', unread:true}
+];
+var notifs = [
+  {text:'Server load at 92% — check resources', unread:true}
+];
+function renderMsgList(){
+  var $l = $('#msgList').empty();
+  messages.forEach(function(m,i){
+    $l.append('<li class="px-2 py-2 border-bottom small msg-item" data-i="'+i+'" style="cursor:pointer;'+(m.unread?'font-weight:700;':'opacity:.6;')+'"><strong>'+m.from+'</strong><br><span class="text-muted">'+m.text+'</span></li>');
+  });
+  $('#msgBadge').text(messages.filter(function(m){return m.unread;}).length);
+  var c = messages.filter(function(m){return m.unread;}).length;
+  $('#msgBadge').toggle(c>0);
+}
+function renderNotifList(){
+  var $l = $('#notifList').empty();
+  notifs.forEach(function(n,i){
+    $l.append('<li class="px-2 py-2 border-bottom small notif-item" data-i="'+i+'" style="cursor:pointer;'+(n.unread?'font-weight:700;':'opacity:.6;')+'">'+n.text+'</li>');
+  });
+  var c = notifs.filter(function(n){return n.unread;}).length;
+  $('#notifBadge').text(c).toggle(c>0);
+}
+renderMsgList(); renderNotifList();
+
+$('#msgList').on('click', '.msg-item', function(){
+  messages[$(this).data('i')].unread = false;
+  renderMsgList();
+});
+$('#notifList').on('click', '.notif-item', function(){
+  notifs[$(this).data('i')].unread = false;
+  renderNotifList();
+});
+
+/* ================= LOGOUT ================= */
+$('#logoutBtn').on('click', function(e){
+  e.preventDefault();
+  if (confirm('Log out of SB Admin?')) toast('You have been logged out (demo only)', 'secondary');
+});
+
+/* ================= COMPONENTS: demo buttons ================= */
+$('.demo-btn').on('click', function(){
+  toast('You clicked the "'+$(this).text()+'" button', 'primary');
+});
+
+/* ================= UTILITIES: color swatches (copy to clipboard) ================= */
+var colors = [
+  {hex:'#4e73df', name:'Primary'}, {hex:'#1cc88a', name:'Success'},
+  {hex:'#36b9cc', name:'Info'}, {hex:'#f6c23e', name:'Warning'},
+  {hex:'#e74a3b', name:'Danger'}, {hex:'#858796', name:'Secondary'}
+];
+var $sw = $('#colorSwatches');
+colors.forEach(function(c){
+  $sw.append('<div class="col-6 col-md-2"><div class="swatch" style="background:'+c.hex+'" data-hex="'+c.hex+'">'+c.hex+'</div><div class="small text-center text-muted mt-1">'+c.name+'</div></div>');
+});
+$('#colorSwatches').on('click', '.swatch', function(){
+  var hex = $(this).data('hex');
+  if (navigator.clipboard) navigator.clipboard.writeText(hex);
+  toast('Copied ' + hex + ' to clipboard', 'dark');
+});
+
+/* ================= SETTINGS FORM ================= */
+$('#settingsForm').on('submit', function(e){
+  e.preventDefault();
+  var name = $('#settingsName').val();
+  $('.avatar').attr('title', name);
+  toast('Settings saved for ' + name, 'success');
+});
+
+/* ================= LOGIN FORM ================= */
+$('#loginForm').on('submit', function(e){
+  e.preventDefault();
+  toast('Logged in as ' + $('#loginEmail').val() + ' (demo only)', 'success');
+  this.reset();
+});
+
+/* ================= EMPLOYEE TABLE (sort, search, add, delete) ================= */
+var employees = [
+  {name:'Tiger Nixon', position:'System Architect', office:'Edinburgh', salary:320800},
+  {name:'Garrett Winters', position:'Accountant', office:'Tokyo', salary:170750},
+  {name:'Ashton Cox', position:'Junior Technical Author', office:'San Francisco', salary:86000},
+  {name:'Cedric Kelly', position:'Senior Javascript Developer', office:'Edinburgh', salary:433060},
+  {name:'Airi Satou', position:'Accountant', office:'Tokyo', salary:162700}
+];
+var sortKey = null, sortAsc = true;
+
+function renderEmpTable(filter){
+  var rows = employees.slice();
+  if (filter){
+    var f = filter.toLowerCase();
+    rows = rows.filter(function(e){
+      return e.name.toLowerCase().indexOf(f)>-1 || e.position.toLowerCase().indexOf(f)>-1 || e.office.toLowerCase().indexOf(f)>-1;
+    });
+  }
+  if (sortKey){
+    rows.sort(function(a,b){
+      if (a[sortKey] < b[sortKey]) return sortAsc ? -1 : 1;
+      if (a[sortKey] > b[sortKey]) return sortAsc ? 1 : -1;
+      return 0;
+    });
+  }
+  var $tb = $('#empTableBody').empty();
+  if (!rows.length){
+    $tb.append('<tr><td colspan="5" class="text-center text-muted py-3">No employees match your search.</td></tr>');
+    return;
+  }
+  rows.forEach(function(e){
+    var idx = employees.indexOf(e);
+    $tb.append(
+      '<tr><td>'+e.name+'</td><td>'+e.position+'</td><td>'+e.office+'</td><td>$'+e.salary.toLocaleString()+'</td>'+
+      '<td><button class="btn btn-sm btn-outline-danger del-emp" data-i="'+idx+'"><i class="bi bi-trash"></i></button></td></tr>'
+    );
+  });
+}
+renderEmpTable();
+
+$('#empTable thead').on('click', '.sortable', function(){
+  var key = $(this).data('key');
+  sortAsc = (sortKey === key) ? !sortAsc : true;
+  sortKey = key;
+  renderEmpTable($('#globalSearch').val());
+});
+$('#empTableBody').on('click', '.del-emp', function(){
+  employees.splice($(this).data('i'), 1);
+  renderEmpTable($('#globalSearch').val());
+  toast('Employee removed', 'secondary');
+});
+$('#addRowBtn').on('click', function(){
+  var name = prompt('Employee name:', 'New Hire');
+  if (!name) return;
+  employees.push({name:name, position:'Staff', office:'Remote', salary: Math.floor(Math.random()*100000)+50000});
+  renderEmpTable($('#globalSearch').val());
+  goToSection('tables');
+  toast('Employee "'+name+'" added', 'success');
+});
+
+});
+</script>
+</body>
+</html>
